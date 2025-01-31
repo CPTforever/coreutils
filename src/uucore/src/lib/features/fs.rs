@@ -705,6 +705,15 @@ pub fn path_ends_with_terminator(path: &Path) -> bool {
         .is_some_and(|&byte| byte == b'/' || byte == b'\\')
 }
 
+#[cfg(twizzler)]
+pub fn path_ends_with_terminator(path: &Path) -> bool {
+    use std::os::unix::prelude::OsStrExt;
+    path.as_os_str()
+        .as_bytes()
+        .last()
+        .is_some_and(|&byte| byte == b'/' || byte == b'\\')
+}
+
 #[cfg(windows)]
 pub fn path_ends_with_terminator(path: &Path) -> bool {
     use std::os::windows::prelude::OsStrExt;
@@ -740,11 +749,16 @@ pub fn is_stdin_directory(stdin: &Stdin) -> bool {
         }
         false
     }
+
+    #[cfg(twizzler)]
+    {
+        false
+    }
 }
 
 pub mod sane_blksize {
 
-    #[cfg(not(target_os = "windows"))]
+    #[cfg(any(not(target_os = "windows"), not(target_os = "twizzler")))]
     use std::os::unix::fs::MetadataExt;
     use std::{fs::metadata, path::Path};
 
