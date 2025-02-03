@@ -19,6 +19,7 @@ use std::env;
 use std::ffi::{OsStr, OsString};
 use std::fs;
 use std::fs::read_dir;
+use std::fs::File;
 use std::hash::Hash;
 use std::io::{Error, ErrorKind, Result as IOResult};
 #[cfg(unix)]
@@ -26,7 +27,10 @@ use std::os::unix::{fs::MetadataExt, io::AsRawFd};
 use std::path::{Component, Path, PathBuf, MAIN_SEPARATOR};
 #[cfg(target_os = "windows")]
 use winapi_util::AsHandleRef;
-
+#[cfg(target_os = "twizzler")]
+use twizzler_rt_abi::bindings::{open_info, rt_objid};
+#[cfg(target_os = "twizzler")]
+use naming_core::dynamic::dynamic_namer_api;
 /// Used to check if the `mode` has its `perm` bit set.
 ///
 /// This macro expands to `mode & perm != 0`.
@@ -42,6 +46,7 @@ macro_rules! has {
 pub struct FileInformation(
     #[cfg(unix)] nix::sys::stat::FileStat,
     #[cfg(windows)] winapi_util::file::Information,
+    #[cfg(target_os = "twizzler")] (),
 );
 
 impl FileInformation {
@@ -59,6 +64,14 @@ impl FileInformation {
         Ok(Self(info))
     }
 
+    #[cfg(target_os = "twizzler")]
+    pub fn from_file(file: &impl std::os::fd::AsRawFd) -> IOResult<Self> {
+        Err(Error::new(
+            ErrorKind::Other,
+            "Ask Ashley to fix this"
+        ))
+    }
+    
     /// Get information for a given path.
     ///
     /// If `path` points to a symlink and `dereference` is true, information about
@@ -88,6 +101,14 @@ impl FileInformation {
             let file = open_options.read(true).open(path.as_ref())?;
             Self::from_file(&file)
         }
+        #[cfg(target_os = "twizzler")]
+        {
+            Err(Error::new(
+                ErrorKind::Other,
+                "Ask Ashley to fix this"
+            ))
+        }
+
     }
 
     pub fn file_size(&self) -> u64 {
@@ -99,6 +120,10 @@ impl FileInformation {
         #[cfg(target_os = "windows")]
         {
             self.0.file_size()
+        }
+        #[cfg(target_os = "twizzler")]
+        {
+            0
         }
     }
 
@@ -147,6 +172,8 @@ impl FileInformation {
         return self.0.st_nlink.try_into().unwrap();
         #[cfg(windows)]
         return self.0.number_of_links();
+        #[cfg(target_os = "twizzler")]
+        return 1;
     }
 
     #[cfg(unix)]
@@ -177,6 +204,13 @@ impl PartialEq for FileInformation {
     fn eq(&self, other: &Self) -> bool {
         self.0.volume_serial_number() == other.0.volume_serial_number()
             && self.0.file_index() == other.0.file_index()
+    }
+}
+
+#[cfg(target_os = "twizzler")]
+impl PartialEq for FileInformation {
+    fn eq(&self, other: &Self) -> bool {
+        true
     }
 }
 
@@ -721,9 +755,10 @@ pub fn path_ends_with_terminator(path: &Path) -> bool {
         .map_or(false, |wide| wide == b'/'.into() || wide == b'\\'.into())
 }
 
+#[cfg(any(windows, unix))]
 pub mod sane_blksize {
 
-    #[cfg(not(target_os = "windows"))]
+    #[cfg(unix)]
     use std::os::unix::fs::MetadataExt;
     use std::{fs::metadata, path::Path};
 
@@ -747,7 +782,7 @@ pub mod sane_blksize {
     /// If the metadata contain invalid values a meaningful adaption
     /// of that value is done.
     pub fn sane_blksize_from_metadata(_metadata: &std::fs::Metadata) -> u64 {
-        #[cfg(not(target_os = "windows"))]
+        #[cfg(unix)]
         {
             sane_blksize(_metadata.blksize())
         }

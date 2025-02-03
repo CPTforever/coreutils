@@ -350,7 +350,6 @@ fn cat_path(
         }
         _ => {
             let file = File::open(path)?;
-
             if let Some(out_info) = out_info {
                 if out_info.file_size() != 0
                     && FileInformation::from_file(&file).ok().as_ref() == Some(out_info)
@@ -410,7 +409,9 @@ fn get_input_type(path: &str) -> CatResult<InputType> {
         return Ok(InputType::StdIn);
     }
 
-    let ft = match metadata(path) {
+    // CHANGE ASAP
+    return Ok(InputType::File);
+    /*let ft = match metadata(path) {
         Ok(md) => md.file_type(),
         Err(e) => {
             if let Some(raw_error) = e.raw_os_error() {
@@ -442,7 +443,7 @@ fn get_input_type(path: &str) -> CatResult<InputType> {
         _ => Err(CatError::UnknownFiletype {
             ft_debug: format!("{ft:?}"),
         }),
-    }
+    }*/
 }
 
 /// Writes handle to stdout with no configuration. This allows a

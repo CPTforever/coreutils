@@ -74,7 +74,8 @@ impl OwnedFileDescriptorOrHandle {
 
     /// instantiates a corresponding `Stdio`
     pub fn into_stdio(self) -> Stdio {
-        Stdio::from(self.fx)
+        //Stdio::from(self.fx)
+        Stdio::inherit()
     }
 
     /// clones self. useful when needing another
