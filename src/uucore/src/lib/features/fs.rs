@@ -27,10 +27,6 @@ use std::os::unix::{fs::MetadataExt, io::AsRawFd};
 use std::path::{Component, Path, PathBuf, MAIN_SEPARATOR};
 #[cfg(target_os = "windows")]
 use winapi_util::AsHandleRef;
-#[cfg(target_os = "twizzler")]
-use twizzler_rt_abi::bindings::{open_info, rt_objid};
-#[cfg(target_os = "twizzler")]
-use naming_core::dynamic::dynamic_namer_api;
 /// Used to check if the `mode` has its `perm` bit set.
 ///
 /// This macro expands to `mode & perm != 0`.

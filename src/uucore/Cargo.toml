@@ -71,9 +71,6 @@ windows-sys = { workspace = true, optional = true, default-features = false, fea
   "Win32_System_WindowsProgramming",
 ] }
 
-[target.'cfg(target_os = "twizzler")'.dependencies]
-twizzler-rt-abi = { path = "/home/allilee/twizzler/src/abi/rt-abi/" }
-
 [features]
 default = []
 # * non-default features
